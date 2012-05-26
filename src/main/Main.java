@@ -116,9 +116,10 @@ public class Main implements Runnable {
 						continue;
 					
 					String msg = new String(dp.getData());
+					msg = msg.trim();
 					BullyMessages bullyMsg = BullyMessages.fromMsg(msg);
 					if (bullyMsg == BullyMessages.ElectionRequest && this.ip.compareTo(sourceIp) > 0) {
-						this.logger.info("Received election message from a following ip ({}). Answering election and casting an election from here", sourceIp);
+						this.logger.info("Received election message from a precedent ip ({}). Answering election and casting an election from here", sourceIp);
 						
 						String resp = BullyMessages.ElectionAnswer.message();
 						byte[] respB = resp.getBytes();
@@ -127,7 +128,7 @@ public class Main implements Runnable {
 						
 						this.instance.election();
 					} else if (bullyMsg == BullyMessages.ElectionRequest && this.ip.compareTo(sourceIp) < 0) {
-						this.logger.info("Received election message from a precedent ip ({}), not answering", sourceIp);
+						this.logger.info("Received election message from a following ip ({}), not answering", sourceIp);
 					}
 				} catch (IOException ex) {
 					this.logger.error("Listener thread stopped due to an error receiving messages", ex);
