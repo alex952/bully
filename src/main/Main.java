@@ -89,14 +89,18 @@ public class Main implements Runnable {
 	
 	private class MessageWaitThread implements Runnable {
 		private MulticastSocket ms;
+		private InetAddress group;
+		private int port;
 		private String ip;
 		private Main instance;
 		private Logger logger = LoggerFactory.getLogger(MessageWaitThread.class);
 		
-		public MessageWaitThread(MulticastSocket ms, String ip, Main instance) {
+		public MessageWaitThread(MulticastSocket ms, String ip, Main instance, InetAddress group, int port) {
 			this.ms = ms;
 			this.ip = ip;
 			this.instance = instance;
+			this.group = group;
+			this.port = port;
 		}
 		
 		@Override
@@ -113,8 +117,18 @@ public class Main implements Runnable {
 					
 					String msg = new String(dp.getData());
 					BullyMessages bullyMsg = BullyMessages.fromMsg(msg);
-					if (bullyMsg == BullyMessages.ElectionRequest)
+					if (bullyMsg == BullyMessages.ElectionRequest && this.ip.compareTo(sourceIp) > 0) {
+						this.logger.info("Received election message from a following ip ({}). Answering election and casting an election from here", sourceIp);
+						
+						String resp = BullyMessages.ElectionAnswer.message();
+						byte[] respB = resp.getBytes();
+						DatagramPacket respP = new DatagramPacket(respB, respB.length, this.group, this.port);
+						this.ms.send(respP);
+						
 						this.instance.election();
+					} else if (bullyMsg == BullyMessages.ElectionRequest && this.ip.compareTo(sourceIp) < 0) {
+						this.logger.info("Received election message from a precedent ip ({}), not answering", sourceIp);
+					}
 				} catch (IOException ex) {
 					this.logger.error("Listener thread stopped due to an error receiving messages", ex);
 				}
@@ -162,7 +176,7 @@ public class Main implements Runnable {
 		this.election();
 		
 		this.logger.info("Listening now on {}:{} for election messages from the multicast group", this.groupIp, this.port);
-		this.waitMessagesThread = new Thread(new MessageWaitThread(this.ms, this.ip, this));
+		this.waitMessagesThread = new Thread(new MessageWaitThread(this.ms, this.ip, this, this.group, this.port));
 		this.waitMessagesThread.start();
 	}
 	
