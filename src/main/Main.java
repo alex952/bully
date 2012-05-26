@@ -72,7 +72,10 @@ public class Main implements Runnable {
 					if (this.ip.equals(sourceIp))
 						continue;
 					
+					this.logger.info("Received election response from {}", sourceIp);
+					
 					String msg = new String(dp.getData());
+					msg = msg.trim();
 					BullyMessages msgBully = BullyMessages.fromMsg(msg);
 
 					if (msgBully == this.msgExpected) {
@@ -118,9 +121,10 @@ public class Main implements Runnable {
 					String msg = new String(dp.getData());
 					msg = msg.trim();
 					BullyMessages bullyMsg = BullyMessages.fromMsg(msg);
+
 					if (bullyMsg == BullyMessages.ElectionRequest && this.ip.compareTo(sourceIp) > 0) {
 						this.logger.info("Received election message from a precedent ip ({}). Answering election and casting an election from here", sourceIp);
-						
+
 						String resp = BullyMessages.ElectionAnswer.message();
 						byte[] respB = resp.getBytes();
 						DatagramPacket respP = new DatagramPacket(respB, respB.length, this.group, this.port);
@@ -190,13 +194,15 @@ public class Main implements Runnable {
 		
 		DatagramPacket dp = new DatagramPacket(buf, buf.length, this.group, this.port);
 		try {
+			ElectionWaitThread electionThread = new ElectionWaitThread(ms, ip, BullyMessages.ElectionAnswer);
+			Thread th = new Thread(electionThread);
+			th.start();
+			
 			this.logger.info("Sending election request message");
 			this.ms.send(dp);
 			this.electionCasted = true;
 			
-			ElectionWaitThread electionThread = new ElectionWaitThread(ms, ip, BullyMessages.ElectionAnswer);
-			Thread th = new Thread(electionThread);
-			th.start();
+			
 			
 			this.logger.info("Waiting for answers {} seconds", 5);
 			Thread.sleep(5000L);
