@@ -1,12 +1,12 @@
 package main;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.InetAddress;
-import java.net.MulticastSocket;
-import java.net.UnknownHostException;
+import java.io.InputStream;
+import java.net.*;
 import java.util.Arrays;
 import java.util.logging.Level;
+import javax.net.ssl.SSLServerSocket;
 import javax.sound.midi.Receiver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,6 +53,37 @@ public class Main implements Runnable {
 		private String ip;
 		private BullyMessages msgExpected;
 		
+		private class ClientSocketThread implements Runnable {
+			private Logger logger = LoggerFactory.getLogger(this.getClass());
+			private ElectionWaitThread instance = null;
+			private Socket client = null;
+			
+			public ClientSocketThread(Socket client, ElectionWaitThread instance) {
+				this.client = client;
+				this.instance = instance;
+			}
+			
+			@Override
+			public void run() {
+				try {
+					BufferedInputStream bis = new BufferedInputStream(client.getInputStream());
+					byte[] buf = new byte[256];
+
+					bis.read(buf);
+					String msg = (new String(buf)).trim();
+					BullyMessages msgBully = BullyMessages.fromMsg(msg);
+
+					if (msgBully == BullyMessages.ElectionAnswer) {
+						this.logger.info("Node {} has answered to the election", client.getInetAddress().getHostAddress());
+						this.instance.responseReceived = true;
+					}
+				} catch (IOException ex) {
+					this.logger.error("Error with communication with the client {}", client.getInetAddress().getHostAddress());
+				}
+			}
+
+		}
+		
 		public ElectionWaitThread(MulticastSocket ms, String ip, BullyMessages msgExpected) {
 			this.ms = ms;
 			this.ip = ip;
@@ -61,30 +92,42 @@ public class Main implements Runnable {
 		
 		@Override
 		public void run() {
-			byte[] buf = new byte[256];
-			DatagramPacket dp = new DatagramPacket(buf, buf.length);
-			
 			try {
-				while(!this.responseReceived) {
-					ms.receive(dp);
+				ServerSocket ss = new ServerSocket(4443);
+				while (true) {
+					Socket client = ss.accept();
 					
-					String sourceIp = dp.getAddress().getHostAddress();
-					if (this.ip.equals(sourceIp))
-						continue;
-					
-					this.logger.info("Received election response from {}", sourceIp);
-					
-					String msg = new String(dp.getData());
-					msg = msg.trim();
-					BullyMessages msgBully = BullyMessages.fromMsg(msg);
-
-					if (msgBully == this.msgExpected) {
-						this.responseReceived = true;
-						this.responsePacket = dp;
-					}
+					Thread t = new Thread(new ClientSocketThread(client, this));
+					t.start();
 				}
+				/*
+				byte[] buf = new byte[256];
+				DatagramPacket dp = new DatagramPacket(buf, buf.length);
+				
+				try {
+					while(!this.responseReceived) {
+						ms.receive(dp);
+						
+						String sourceIp = dp.getAddress().getHostAddress();
+						if (this.ip.equals(sourceIp))
+							continue;
+						
+						this.logger.info("Received election response from {}", sourceIp);
+						
+						String msg = new String(dp.getData());
+						msg = msg.trim();
+						BullyMessages msgBully = BullyMessages.fromMsg(msg);
+
+						if (msgBully == this.msgExpected) {
+							this.responseReceived = true;
+							this.responsePacket = dp;
+						}
+					}
+				} catch (IOException ex) {
+					this.logger.info("Closing socket");
+				}*/
 			} catch (IOException ex) {
-				this.logger.info("Closing socket");
+				java.util.logging.Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
 			}
 		}
 		
