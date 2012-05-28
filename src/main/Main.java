@@ -2,19 +2,15 @@ package main;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.*;
-import java.util.Arrays;
 import java.util.logging.Level;
-import javax.net.ssl.SSLServerSocket;
-import javax.sound.midi.Receiver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
 
 /**
- *
+ * Main class for the Bully algorithm
  * @author alex952
  */
 public class Main implements Runnable {
@@ -94,8 +90,14 @@ public class Main implements Runnable {
 		public void run() {
 			try {
 				ServerSocket ss = new ServerSocket(4443);
+				ss.setSoTimeout(5000);
 				while (true) {
-					Socket client = ss.accept();
+					Socket client = null;
+					try {
+						client = ss.accept();
+					} catch (SocketTimeoutException e) {
+						break;
+					}
 					
 					Thread t = new Thread(new ClientSocketThread(client, this));
 					t.start();
@@ -245,17 +247,9 @@ public class Main implements Runnable {
 			this.ms.send(dp);
 			this.electionCasted = true;
 			
+			this.logger.info("Waiting for answers ({} seconds, more or less)", 5);
 			
-			
-			this.logger.info("Waiting for answers {} seconds", 5);
-			Thread.sleep(5000L);
-			
-			if (th.isAlive()) {
-				this.ms.close();
-				th.interrupt();
-				this.ms = new MulticastSocket(this.port);
-				this.ms.joinGroup(this.group);
-			}
+			while(th.isAlive()) { }
 			
 			if (!electionThread.responseReceived) {
 				this.logger.info("No answers received. Sending master message");
@@ -267,8 +261,6 @@ public class Main implements Runnable {
 			
 		} catch (IOException ex) {
 			this.logger.error("Error sending multicast eleciton message");
-		} catch (InterruptedException e) {
-			this.logger.error("Couldn't wait for answers due to an error", e);
 		}
 	}
 	
@@ -277,12 +269,12 @@ public class Main implements Runnable {
 			ElectionWaitThread masterWaitThread = new ElectionWaitThread(ms, ip, BullyMessages.ElectionAnswer);
 			Thread th = new Thread(masterWaitThread);
 			th.start();
-
+			
 			this.logger.info("Waiting for master messages");
 			Thread.sleep(5000L);
 
 			if (th.isAlive()) {
-				this.ms.close();
+				//this.ms.close();
 				th.interrupt();
 				this.ms = new MulticastSocket(port);
 				this.ms.joinGroup(this.group);
