@@ -179,6 +179,8 @@ public class Main implements Runnable {
 					} else if (bullyMsg == BullyMessages.ElectionRequest && this.ip.compareTo(sourceIp) < 0) {
 						this.logger.info("Received election message from a following ip ({}), not answering", sourceIp);
 					}
+				} catch (SocketTimeoutException ex) {
+					continue;
 				} catch (IOException ex) {
 					this.logger.error("Listener thread stopped due to an error receiving messages", ex);
 				}
@@ -206,6 +208,7 @@ public class Main implements Runnable {
 			
 			//Join multicast group
 			ms = new MulticastSocket(4663);
+			ms.setSoTimeout(5000);
 			group = InetAddress.getByName(this.groupIp);
 			ms.joinGroup(group);
 			
