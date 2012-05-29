@@ -175,7 +175,7 @@ public class Main implements Runnable {
 						this.logger.info("Received election message from a following ip ({}), not answering", sourceIp);
 					} else if (bullyMsg == BullyMessages.Master) {
 						if (this.instance.electionCasted == true) {
-							this.instance.master = sourceIp;
+							this.instance.newMaster = sourceIp;
 						}
 					}
 				} catch (SocketTimeoutException ex) {
@@ -191,6 +191,7 @@ public class Main implements Runnable {
 	private InetAddress group;
 	private String ip;
 	private String master = "";
+    private String newMaster = "";
 	private Boolean electionCasted = false;
 	private int port = 4443;
 	private String groupIp = "224.0.0.1";
@@ -272,13 +273,13 @@ public class Main implements Runnable {
 	private void waitForMaster() {
 		try {
 			this.logger.info("Waiting for master messages");
-			String oldMaster = this.master;
 
 			Thread.sleep(5000L);
 
-			if (!this.master.equals(oldMaster)) {
+			if (!this.newMaster.equals(this.master)) {
 				this.logger.info("Master message received. The new master is {}", this.master);
 				this.electionCasted = false;
+                this.master = this.newMaster;
 			} else {
 				this.logger.info("No master message received. Re-casting election");
 				this.election();
