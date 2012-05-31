@@ -90,7 +90,7 @@ public class Main implements Runnable {
 		@Override
 		public void run() {
 			try {
-				ServerSocket ss = new ServerSocket(447);
+				ServerSocket ss = new ServerSocket(4444);
 				ss.setSoTimeout(5000);
 				while (true) {
 					Socket client = null;
@@ -174,7 +174,7 @@ public class Main implements Runnable {
                             @Override
                             public void run() {
                                 try {
-                                    Socket client = new Socket(sourceIp, 447);
+                                    Socket client = new Socket(sourceIp, 4444);
                                     BufferedOutputStream bos = new BufferedOutputStream(client.getOutputStream());
 
                                     bos.write(respB);
