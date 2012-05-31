@@ -1,6 +1,7 @@
 package main;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.net.*;
 import java.util.logging.Level;
@@ -153,22 +154,41 @@ public class Main implements Runnable {
 				try {
 					this.ms.receive(dp);
 
-					String sourceIp = dp.getAddress().getHostAddress();
+					final String sourceIp = dp.getAddress().getHostAddress();
 					if (this.ip.equals(sourceIp)) {
 						continue;
 					}
 
-					String msg = new String(dp.getData());
-					msg = msg.trim();
+					final String msg = (new String(dp.getData())).trim();
 					BullyMessages bullyMsg = BullyMessages.fromMsg(msg);
 
 					if (bullyMsg == BullyMessages.ElectionRequest && this.ip.compareTo(sourceIp) > 0) {
 						this.logger.info("Received election message from a precedent ip ({}). Answering election and casting an election from here", sourceIp);
 
 						String resp = BullyMessages.ElectionAnswer.message();
-						byte[] respB = resp.getBytes();
-						DatagramPacket respP = new DatagramPacket(respB, respB.length, this.group, this.port);
-						this.ms.send(respP);
+						final byte[] respB = resp.getBytes();
+
+                        Thread t = new Thread(new Runnable() {
+                            Logger logger = LoggerFactory.getLogger(this.getClass());
+
+                            @Override
+                            public void run() {
+                                try {
+                                    Socket client = new Socket(sourceIp, 4443);
+                                    BufferedOutputStream bos = new BufferedOutputStream(client.getOutputStream());
+
+                                    bos.write(respB);
+                                    bos.close();
+                                    client.close();
+                                } catch (IOException e) {
+                                    this.logger.error("Error contacting with the server answering election");
+                                }
+                            }
+                        });
+                        t.start();
+
+						//DatagramPacket respP = new DatagramPacket(respB, respB.length, this.group, this.port);
+						//this.ms.send(respP);
 
 						this.instance.election();
 					} else if (bullyMsg == BullyMessages.ElectionRequest && this.ip.compareTo(sourceIp) < 0) {
