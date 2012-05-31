@@ -90,7 +90,7 @@ public class Main implements Runnable {
 		@Override
 		public void run() {
 			try {
-				ServerSocket ss = new ServerSocket(4443);
+				ServerSocket ss = new ServerSocket(447);
 				ss.setSoTimeout(5000);
 				while (true) {
 					Socket client = null;
@@ -174,7 +174,7 @@ public class Main implements Runnable {
                             @Override
                             public void run() {
                                 try {
-                                    Socket client = new Socket(sourceIp, 4443);
+                                    Socket client = new Socket(sourceIp, 447);
                                     BufferedOutputStream bos = new BufferedOutputStream(client.getOutputStream());
 
                                     bos.write(respB);
@@ -226,7 +226,7 @@ public class Main implements Runnable {
 			this.logger.info("I'm node with ip {} and i'm joining the multicast group", this.ip);
 
 			//Join multicast group
-			ms = new MulticastSocket(4663);
+			ms = new MulticastSocket(this.port);
 			ms.setSoTimeout(5000);
 			group = InetAddress.getByName(this.groupIp);
 			ms.joinGroup(group);
