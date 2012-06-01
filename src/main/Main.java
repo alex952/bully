@@ -288,12 +288,8 @@ public class Main implements Runnable {
 			if (!this.newMaster.equals(this.master)) {
 				this.logger.info("Master message received. The new master is {}", this.master);
 				this.electionCasted = false;
-<<<<<<< HEAD
                 this.master = this.newMaster;
 				this.masterTask.interrupt();
-=======
-				this.master = this.newMaster;
->>>>>>> Avoid closing socket
 			} else {
 				this.logger.info("No master message received. Re-casting election");
 				this.election();
