@@ -282,6 +282,7 @@ public class Main implements Runnable {
 				this.logger.info("Master message received. The new master is {}", this.master);
 				this.electionCasted = false;
                 this.master = this.newMaster;
+				this.masterTask.interrupt();
 			} else {
 				this.logger.info("No master message received. Re-casting election");
 				this.election();
