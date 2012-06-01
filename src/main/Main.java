@@ -98,6 +98,8 @@ public class Main implements Runnable {
 						client = ss.accept();
 					} catch (SocketTimeoutException e) {
 						break;
+					} finally {
+						ss.close();
 					}
 
 					Thread t = new Thread(new ClientSocketThread(client, this));
