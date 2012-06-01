@@ -89,24 +89,30 @@ public class Main implements Runnable {
 
 		@Override
 		public void run() {
+			ServerSocket ss = null;
 			try {
-				ServerSocket ss = new ServerSocket(4444);
+				 ss = new ServerSocket(4444);
 				ss.setSoTimeout(5000);
 				while (true) {
 					Socket client = null;
-					try {
-						client = ss.accept();
-					} catch (SocketTimeoutException e) {
-						break;
-					} finally {
-						ss.close();
-					}
+					
+					client = ss.accept();
 
 					Thread t = new Thread(new ClientSocketThread(client, this));
 					t.start();
 				}
+			} catch (SocketTimeoutException e) {
+				
 			} catch (IOException ex) {
-				java.util.logging.Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+				this.logger.error("I/O problem", ex);
+			} finally {
+				if (!ss.isClosed()) {
+					try {
+						ss.close();
+					} catch (IOException ex) {
+						this.logger.error("Problem closing connection", ex);
+					}
+				}
 			}
 		}
 	}
@@ -150,24 +156,25 @@ public class Main implements Runnable {
 						String resp = BullyMessages.ElectionAnswer.message();
 						final byte[] respB = resp.getBytes();
 
-                        Thread t = new Thread(new Runnable() {
-                            Logger logger = LoggerFactory.getLogger(this.getClass());
+						Thread t = new Thread(new Runnable() {
 
-                            @Override
-                            public void run() {
-                                try {
-                                    Socket client = new Socket(sourceIp, 4444);
-                                    BufferedOutputStream bos = new BufferedOutputStream(client.getOutputStream());
+							Logger logger = LoggerFactory.getLogger(this.getClass());
 
-                                    bos.write(respB);
-                                    bos.close();
-                                    client.close();
-                                } catch (IOException e) {
-                                    this.logger.error("Error contacting with the server answering election");
-                                }
-                            }
-                        });
-                        t.run();
+							@Override
+							public void run() {
+								try {
+									Socket client = new Socket(sourceIp, 4444);
+									BufferedOutputStream bos = new BufferedOutputStream(client.getOutputStream());
+
+									bos.write(respB);
+									bos.close();
+									client.close();
+								} catch (IOException e) {
+									this.logger.error("Error contacting with the server answering election");
+								}
+							}
+						});
+						t.run();
 
 						//DatagramPacket respP = new DatagramPacket(respB, respB.length, this.group, this.port);
 						//this.ms.send(respP);
@@ -193,7 +200,7 @@ public class Main implements Runnable {
 	private InetAddress group;
 	private String ip;
 	private String master = "";
-    private String newMaster = "";
+	private String newMaster = "";
 	private Boolean electionCasted = false;
 	private int port = 4443;
 	private String groupIp = "224.0.0.1";
@@ -281,8 +288,12 @@ public class Main implements Runnable {
 			if (!this.newMaster.equals(this.master)) {
 				this.logger.info("Master message received. The new master is {}", this.master);
 				this.electionCasted = false;
+<<<<<<< HEAD
                 this.master = this.newMaster;
 				this.masterTask.interrupt();
+=======
+				this.master = this.newMaster;
+>>>>>>> Avoid closing socket
 			} else {
 				this.logger.info("No master message received. Re-casting election");
 				this.election();
