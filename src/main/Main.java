@@ -168,9 +168,9 @@ public class Main implements Runnable {
 
 									bos.write(respB);
 									bos.close();
-									client.close();
+									//client.close();
 								} catch (IOException e) {
-									this.logger.error("Error contacting with the server answering election");
+									this.logger.error("Error contacting with the server answering election", e);
 								}
 							}
 						});
