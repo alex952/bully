@@ -164,6 +164,11 @@ public class Main implements Runnable {
 							@Override
 							public void run() {
 								try {
+									try {
+										Thread.sleep(500);
+									} catch (InterruptedException ex) {
+										this.logger.error("Stupid mistake", ex);
+									}
 									Socket client = new Socket(sourceIp, 4444);
 									BufferedOutputStream bos = new BufferedOutputStream(client.getOutputStream());
 
