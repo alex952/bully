@@ -302,7 +302,8 @@ public class Main implements Runnable {
 
 			this.logger.info("Starting task of master");
 			//Start task of master	
-			this.masterTask.start();
+			if (!this.masterTask.isAlive())
+				this.masterTask.start();
 
 			this.electionCasted = false;
 		} catch (IOException e) {
