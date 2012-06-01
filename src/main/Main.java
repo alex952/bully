@@ -96,9 +96,9 @@ public class Main implements Runnable {
 				ss.setSoTimeout(5000);
 				while (true) {
 					Socket client = null;
-					
+					this.logger.info("Accepting client responses");
 					client = ss.accept();
-
+					this.logger.info("Client {} accepted", client.getInetAddress().getHostAddress());
 					Thread t = new Thread(new ClientSocketThread(client, this));
 					t.start();
 				}
@@ -237,12 +237,12 @@ public class Main implements Runnable {
 
 	@Override
 	public void run() {
-		this.logger.info("Casting raise election");
-		this.election();
-
 		this.logger.info("Listening now on {}:{} for election messages from the multicast group", this.groupIp, this.port);
 		this.waitMessagesThread = new Thread(new MessageWaitThread(this.ms, this.ip, this, this.group, this.port));
-		this.waitMessagesThread.start();
+		this.waitMessagesThread.start();	
+		
+		this.logger.info("Casting raise election");
+		this.election();
 	}
 
 	private void election() {
@@ -285,13 +285,13 @@ public class Main implements Runnable {
 		try {
 			this.logger.info("Waiting for master messages");
 
-			Thread.sleep(5000L);
+			Thread.sleep(15000L);
 
 			if (!this.newMaster.equals(this.master)) {
-				this.logger.info("Master message received. The new master is {}", this.master);
 				this.electionCasted = false;
                 this.master = this.newMaster;
 				this.masterTask.interrupt();
+				this.logger.info("Master message received. The new master is {}", this.master);
 			} else {
 				this.logger.info("No master message received. Re-casting election");
 				this.election();
