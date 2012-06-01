@@ -68,6 +68,7 @@ public class Main implements Runnable {
 					byte[] buf = new byte[256];
 
 					bis.read(buf);
+					client.close();
 					String msg = (new String(buf)).trim();
 					BullyMessages msgBully = BullyMessages.fromMsg(msg);
 
@@ -91,7 +92,7 @@ public class Main implements Runnable {
 		public void run() {
 			ServerSocket ss = null;
 			try {
-				 ss = new ServerSocket(4444);
+				ss = new ServerSocket(4444);
 				ss.setSoTimeout(5000);
 				while (true) {
 					Socket client = null;
@@ -184,6 +185,7 @@ public class Main implements Runnable {
 						this.logger.info("Received election message from a following ip ({}), not answering", sourceIp);
 					} else if (bullyMsg == BullyMessages.Master) {
 						if (this.instance.electionCasted == true) {
+							this.logger.info("Master message received from {}", sourceIp);
 							this.instance.newMaster = sourceIp;
 						}
 					}
