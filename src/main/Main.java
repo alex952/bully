@@ -103,26 +103,6 @@ public class Main implements Runnable {
 					Thread t = new Thread(new ClientSocketThread(client, this));
 					t.start();
 				}
-				/*
-				 * byte[] buf = new byte[256]; DatagramPacket dp = new
-				 * DatagramPacket(buf, buf.length);
-				 *
-				 * try { while(!this.responseReceived) { ms.receive(dp);
-				 *
-				 * String sourceIp = dp.getAddress().getHostAddress(); if
-				 * (this.ip.equals(sourceIp)) continue;
-				 *
-				 * this.logger.info("Received election response from {}",
-				 * sourceIp);
-				 *
-				 * String msg = new String(dp.getData()); msg = msg.trim();
-				 * BullyMessages msgBully = BullyMessages.fromMsg(msg);
-				 *
-				 * if (msgBully == this.msgExpected) { this.responseReceived =
-				 * true; this.responsePacket = dp; } } } catch (IOException ex)
-				 * { this.logger.info("Closing socket");
-				}
-				 */
 			} catch (IOException ex) {
 				java.util.logging.Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
 			}
@@ -185,7 +165,7 @@ public class Main implements Runnable {
                                 }
                             }
                         });
-                        t.start();
+                        t.run();
 
 						//DatagramPacket respP = new DatagramPacket(respB, respB.length, this.group, this.port);
 						//this.ms.send(respP);
