@@ -189,10 +189,15 @@ public class Main implements Runnable {
 	public void masterReceived() {
 		this.electionCasted = false;
 		this.master = this.newMaster;
-		this.masterTask.interrupt();
-		this.masterTask = null;
-		this.masterAlive.interrupt();
-		this.masterAlive = null;
+		if (this.masterTask != null) {
+			this.masterTask.interrupt();
+			this.masterTask = null;
+		}
+		
+		if (this.masterAlive != null) {
+			this.masterAlive.interrupt();
+			this.masterAlive = null;
+		}
 		this.logger.info("Master message received. The new master is {}", this.master);
 	}
 
