@@ -91,7 +91,8 @@ public class MessageWaitThread implements Runnable {
 				}
 			} catch (SocketTimeoutException ex) {
 				if (!this.instance.getMaster().equals(this.ip)) {
-					if (--this.countMaster ==  0) {
+					if (--this.countMaster <=  0) {
+						this.countMaster = MAX_MASTER;
 						this.instance.election();
 					}
 				}
