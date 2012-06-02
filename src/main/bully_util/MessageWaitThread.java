@@ -56,7 +56,11 @@ public class MessageWaitThread implements Runnable {
 						@Override
 						public void run() {
 							try {
-								Socket client = new Socket(sourceIp, 4444);
+								Socket client = new Socket();
+								client.setReuseAddress(true);
+								client.bind(new InetSocketAddress(InetAddress.getLocalHost(), 4444));
+								client.connect(new InetSocketAddress(InetAddress.getByName(sourceIp), 4444));
+								
 								BufferedOutputStream bos = new BufferedOutputStream(client.getOutputStream());
 
 								bos.write(respB);

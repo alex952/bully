@@ -58,7 +58,9 @@ public class ElectionWaitThread implements Runnable {
 	public void run() {
 		ServerSocket ss = null;
 		try {
-			ss = new ServerSocket(4444);
+			ss = new ServerSocket();
+			ss.setReuseAddress(true);
+			ss.bind(new InetSocketAddress(InetAddress.getLocalHost(), 4444));
 			ss.setSoTimeout(5000);
 			while (true) {
 				Socket client = null;
