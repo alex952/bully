@@ -33,6 +33,7 @@ public class MessageWaitThread implements Runnable {
 			byte[] buf = new byte[256];
 			DatagramPacket dp = new DatagramPacket(buf, buf.length);
 			try {
+				this.ms.setSoTimeout(5000);
 				this.ms.receive(dp);
 
 				final String sourceIp = dp.getAddress().getHostAddress();

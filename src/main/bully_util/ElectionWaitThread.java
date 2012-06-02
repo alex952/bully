@@ -66,6 +66,7 @@ public class ElectionWaitThread implements Runnable {
 			while (true) {
 				Socket client = null;
 				this.logger.info("Accepting client responses");
+				ss.setSoTimeout(5000);
 				client = ss.accept();
 				this.logger.info("Client {} accepted", client.getInetAddress().getHostAddress());
 				Thread t = new Thread(new ClientSocketThread(client, this));
