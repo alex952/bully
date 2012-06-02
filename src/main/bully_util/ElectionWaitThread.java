@@ -34,7 +34,8 @@ public class ElectionWaitThread implements Runnable {
 				byte[] buf = new byte[256];
 
 				bis.read(buf);
-				client.close();
+				if (!client.isClosed())
+					client.close();
 				String msg = (new String(buf)).trim();
 				Main.BullyMessages msgBully = Main.BullyMessages.fromMsg(msg);
 

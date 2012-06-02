@@ -65,7 +65,8 @@ public class MessageWaitThread implements Runnable {
 
 								bos.write(respB);
 								bos.close();
-								//client.close();
+								if (!client.isClosed())
+									client.close();
 							} catch (IOException e) {
 								this.logger.error("Error contacting with the server answering election", e);
 							}
