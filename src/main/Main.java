@@ -173,11 +173,7 @@ public class Main implements Runnable {
 			Thread.sleep(15000L);
 
 			if (!this.newMaster.equals(this.master)) {
-				this.electionCasted = false;
-                this.master = this.newMaster;
-				this.masterTask.interrupt();
-				this.masterAlive.interrupt();
-				this.logger.info("Master message received. The new master is {}", this.master);
+				this.masterReceived();
 			} else {
 				this.logger.info("No master message received. Re-casting election");
 				this.election();
@@ -185,6 +181,14 @@ public class Main implements Runnable {
 		} catch (InterruptedException e) {
 			this.logger.error("Couldn't wait for answers due to an error", e);
 		}
+	}
+	
+	public void masterReceived() {
+		this.electionCasted = false;
+		this.master = this.newMaster;
+		this.masterTask.interrupt();
+		this.masterAlive.interrupt();
+		this.logger.info("Master message received. The new master is {}", this.master);
 	}
 
 	private void masterMessage() {
