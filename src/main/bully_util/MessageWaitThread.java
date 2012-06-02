@@ -15,6 +15,9 @@ public class MessageWaitThread implements Runnable {
 	private String ip;
 	private Main instance;
 	private Logger logger = LoggerFactory.getLogger(MessageWaitThread.class);
+	
+	private final Integer MAX_MASTER = 3;
+	private int countMaster = MAX_MASTER;
 
 	public MessageWaitThread(MulticastSocket ms, String ip, Main instance, InetAddress group, int port) {
 		this.ms = ms;
@@ -77,8 +80,16 @@ public class MessageWaitThread implements Runnable {
 						this.logger.info("Master message received from {}", sourceIp);
 						this.instance.setNewMaster(sourceIp);
 					}
+				} else if (bullyMsg == Main.BullyMessages.MasterAlive) {
+					this.countMaster = MAX_MASTER;
 				}
 			} catch (SocketTimeoutException ex) {
+				if (!this.instance.getMaster().equals(this.ip)) {
+					if (--this.countMaster ==  0) {
+						this.instance.election();
+					}
+				}
+				
 				continue;
 			} catch (IOException ex) {
 				this.logger.error("Listener thread stopped due to an error receiving messages", ex);

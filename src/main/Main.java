@@ -61,9 +61,14 @@ public class Main implements Runnable {
     private Thread masterAlive = null;
 	private Thread masterTask = null;
 // </editor-fold>
-	
+
 
 // <editor-fold desc="Setters and getters" defaultstate="collapsed">
+
+	public String getMaster() {
+		return master;
+	}
+	
 	public String getNewMaster() {
 		return newMaster;
 	}
@@ -203,6 +208,8 @@ public class Main implements Runnable {
                 this.masterAlive.start();
 
 			this.electionCasted = false;
+			this.master = this.ip;
+			this.newMaster = "";
 		} catch (IOException e) {
 			this.logger.error("Couldn't send master message due to an error", e);
 		}
