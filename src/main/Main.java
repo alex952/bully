@@ -8,6 +8,7 @@ import java.util.logging.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import main.bully_util.*;
+import main.delete.MasterTaskThread;
 
 /**
  * Main class for the Bully algorithm
@@ -59,6 +60,8 @@ public class Main implements Runnable {
 	private String groupIp = "224.0.0.1";
 	private Thread waitMessagesThread = null;
     private Thread masterAlive = null;
+	
+	private Runnable masterTaskRunnable;
 	private Thread masterTask = null;
 // </editor-fold>
 
@@ -108,7 +111,7 @@ public class Main implements Runnable {
 			ms.joinGroup(group);
 
 			//Create thread of master task
-			this.masterTask = new Thread(masterTask);
+			this.masterTaskRunnable = masterTask;
 
 			Thread.sleep(2000L);
 		} catch (UnknownHostException e) {
@@ -187,7 +190,9 @@ public class Main implements Runnable {
 		this.electionCasted = false;
 		this.master = this.newMaster;
 		this.masterTask.interrupt();
+		this.masterTask = null;
 		this.masterAlive.interrupt();
+		this.masterAlive = null;
 		this.logger.info("Master message received. The new master is {}", this.master);
 	}
 
@@ -202,14 +207,15 @@ public class Main implements Runnable {
 
 			this.logger.info("Starting task of master");
 			//Start task of master	
-			if (!this.masterTask.isAlive())
+			if (this.masterTask == null || !this.masterTask.isAlive()) {
+				this.masterTask = new Thread(this.masterTaskRunnable);
 				this.masterTask.start();
+			}
 
-            if (this.masterAlive == null)
+            if (this.masterAlive == null || !this.masterAlive.isAlive()) {
                 this.masterAlive = new Thread(new MasterAliveThread(ms, group, port));
-
-            if (!this.masterAlive.isAlive())
-                this.masterAlive.start();
+				this.masterAlive.start();
+			}
 
 			this.electionCasted = false;
 			this.master = this.ip;
@@ -220,33 +226,9 @@ public class Main implements Runnable {
 	}
 
 	public static void main(String[] args) {
-		Main m = new Main(new Runnable() {
-
-			private Logger logger = LoggerFactory.getLogger(this.getClass());
-
-			@Override
-			public void run() {
-				InetAddress addr;
-				try {
-					addr = InetAddress.getLocalHost();
-				} catch (UnknownHostException ex) {
-					this.logger.error("Stupid bug");
-					return;
-				}
-
-				String ip = addr.getHostAddress();
-
-				while (true) {
-					this.logger.info("I'm the master with ip {}", ip);
-					try {
-						Thread.sleep(2000L);
-					} catch (InterruptedException e) {
-						this.logger.error("Master task thread interrupted");
-						return;
-					}
-				}
-			}
-		});
+		MasterTaskThread mtt = new MasterTaskThread();
+		
+		Main m = new Main(mtt);
 		m.run();
 	}
 }
