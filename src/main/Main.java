@@ -18,7 +18,10 @@ public class Main implements Runnable {
 
 	public enum BullyMessages {
 
-		ElectionRequest("election"), ElectionAnswer("electionAnswer"), Master("master");
+		ElectionRequest("election"),
+            ElectionAnswer("electionAnswer"),
+            Master("master"),
+            MasterAlive("masterAlive");
 		private final String msg;
 
 		BullyMessages(String msg) {
@@ -36,6 +39,8 @@ public class Main implements Runnable {
 				return BullyMessages.ElectionAnswer;
 			} else if (msg.equals("master")) {
 				return BullyMessages.Master;
+			} else if (msg.equals("masterAlive")) {
+				return BullyMessages.MasterAlive;
 			} else {
 				return null;
 			}
@@ -53,6 +58,7 @@ public class Main implements Runnable {
 	private int port = 4443;
 	private String groupIp = "224.0.0.1";
 	private Thread waitMessagesThread = null;
+    private Thread masterAlive = null;
 	private Thread masterTask = null;
 // </editor-fold>
 	
@@ -165,6 +171,7 @@ public class Main implements Runnable {
 				this.electionCasted = false;
                 this.master = this.newMaster;
 				this.masterTask.interrupt();
+				this.masterAlive.interrupt();
 				this.logger.info("Master message received. The new master is {}", this.master);
 			} else {
 				this.logger.info("No master message received. Re-casting election");
@@ -188,6 +195,12 @@ public class Main implements Runnable {
 			//Start task of master	
 			if (!this.masterTask.isAlive())
 				this.masterTask.start();
+
+            if (this.masterAlive == null)
+                this.masterAlive = new Thread(new MasterAliveThread(ms, group, port));
+
+            if (!this.masterAlive.isAlive())
+                this.masterAlive.start();
 
 			this.electionCasted = false;
 		} catch (IOException e) {
