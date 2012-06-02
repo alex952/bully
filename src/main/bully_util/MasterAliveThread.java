@@ -27,7 +27,8 @@ public class MasterAliveThread implements Runnable {
                 try {
                     Thread.sleep(2000L);
                 } catch (InterruptedException ex) {
-                    this.logger.error("Error getting the thread asleep", ex);
+                    this.logger.error("Master alive thread interrupted", ex);
+					return;
                 }
 
                 String msg = BullyMessages.MasterAlive.message();

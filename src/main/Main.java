@@ -241,7 +241,7 @@ public class Main implements Runnable {
 					try {
 						Thread.sleep(2000L);
 					} catch (InterruptedException e) {
-						this.logger.error("Stupid bug");
+						this.logger.error("Master task thread interrupted");
 						return;
 					}
 				}
