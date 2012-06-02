@@ -7,6 +7,7 @@ import java.net.*;
 import java.util.logging.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import main.bully_util.*;
 
 /**
  * Main class for the Bully algorithm
@@ -24,11 +25,11 @@ public class Main implements Runnable {
 			this.msg = msg;
 		}
 
-		String message() {
+		public String message() {
 			return this.msg;
 		}
 
-		static BullyMessages fromMsg(String msg) {
+		static public BullyMessages fromMsg(String msg) {
 			if (msg.equals("election")) {
 				return BullyMessages.ElectionRequest;
 			} else if (msg.equals("electionAnswer")) {
@@ -41,167 +42,7 @@ public class Main implements Runnable {
 		}
 	}
 
-	private class ElectionWaitThread implements Runnable {
-
-		public MulticastSocket ms;
-		public Boolean responseReceived = false;
-		public DatagramPacket responsePacket = null;
-		private Logger logger = LoggerFactory.getLogger(ElectionWaitThread.class);
-		private String ip;
-		private BullyMessages msgExpected;
-
-		private class ClientSocketThread implements Runnable {
-
-			private Logger logger = LoggerFactory.getLogger(this.getClass());
-			private ElectionWaitThread instance = null;
-			private Socket client = null;
-
-			public ClientSocketThread(Socket client, ElectionWaitThread instance) {
-				this.client = client;
-				this.instance = instance;
-			}
-
-			@Override
-			public void run() {
-				try {
-					BufferedInputStream bis = new BufferedInputStream(client.getInputStream());
-					byte[] buf = new byte[256];
-
-					bis.read(buf);
-					client.close();
-					String msg = (new String(buf)).trim();
-					BullyMessages msgBully = BullyMessages.fromMsg(msg);
-
-					if (msgBully == BullyMessages.ElectionAnswer) {
-						this.logger.info("Node {} has answered to the election", client.getInetAddress().getHostAddress());
-						this.instance.responseReceived = true;
-					}
-				} catch (IOException ex) {
-					this.logger.error("Error with communication with the client {}", client.getInetAddress().getHostAddress());
-				}
-			}
-		}
-
-		public ElectionWaitThread(MulticastSocket ms, String ip, BullyMessages msgExpected) {
-			this.ms = ms;
-			this.ip = ip;
-			this.msgExpected = msgExpected;
-		}
-
-		@Override
-		public void run() {
-			ServerSocket ss = null;
-			try {
-				ss = new ServerSocket(4444);
-				ss.setSoTimeout(5000);
-				while (true) {
-					Socket client = null;
-					this.logger.info("Accepting client responses");
-					client = ss.accept();
-					this.logger.info("Client {} accepted", client.getInetAddress().getHostAddress());
-					Thread t = new Thread(new ClientSocketThread(client, this));
-					t.start();
-				}
-			} catch (SocketTimeoutException e) {
-				
-			} catch (IOException ex) {
-				this.logger.error("I/O problem", ex);
-			} finally {
-				if (!ss.isClosed()) {
-					try {
-						ss.close();
-					} catch (IOException ex) {
-						this.logger.error("Problem closing connection", ex);
-					}
-				}
-			}
-		}
-	}
-
-	private class MessageWaitThread implements Runnable {
-
-		private MulticastSocket ms;
-		private InetAddress group;
-		private int port;
-		private String ip;
-		private Main instance;
-		private Logger logger = LoggerFactory.getLogger(MessageWaitThread.class);
-
-		public MessageWaitThread(MulticastSocket ms, String ip, Main instance, InetAddress group, int port) {
-			this.ms = ms;
-			this.ip = ip;
-			this.instance = instance;
-			this.group = group;
-			this.port = port;
-		}
-
-		@Override
-		public void run() {
-			while (true) {
-				byte[] buf = new byte[256];
-				DatagramPacket dp = new DatagramPacket(buf, buf.length);
-				try {
-					this.ms.receive(dp);
-
-					final String sourceIp = dp.getAddress().getHostAddress();
-					if (this.ip.equals(sourceIp)) {
-						continue;
-					}
-
-					final String msg = (new String(dp.getData())).trim();
-					BullyMessages bullyMsg = BullyMessages.fromMsg(msg);
-
-					if (bullyMsg == BullyMessages.ElectionRequest && this.ip.compareTo(sourceIp) > 0) {
-						this.logger.info("Received election message from a precedent ip ({}). Answering election and casting an election from here", sourceIp);
-
-						String resp = BullyMessages.ElectionAnswer.message();
-						final byte[] respB = resp.getBytes();
-
-						Thread t = new Thread(new Runnable() {
-
-							Logger logger = LoggerFactory.getLogger(this.getClass());
-
-							@Override
-							public void run() {
-								try {
-									try {
-										Thread.sleep(500);
-									} catch (InterruptedException ex) {
-										this.logger.error("Stupid mistake", ex);
-									}
-									Socket client = new Socket(sourceIp, 4444);
-									BufferedOutputStream bos = new BufferedOutputStream(client.getOutputStream());
-
-									bos.write(respB);
-									bos.close();
-									//client.close();
-								} catch (IOException e) {
-									this.logger.error("Error contacting with the server answering election", e);
-								}
-							}
-						});
-						t.run();
-
-						//DatagramPacket respP = new DatagramPacket(respB, respB.length, this.group, this.port);
-						//this.ms.send(respP);
-
-						this.instance.election();
-					} else if (bullyMsg == BullyMessages.ElectionRequest && this.ip.compareTo(sourceIp) < 0) {
-						this.logger.info("Received election message from a following ip ({}), not answering", sourceIp);
-					} else if (bullyMsg == BullyMessages.Master) {
-						if (this.instance.electionCasted == true) {
-							this.logger.info("Master message received from {}", sourceIp);
-							this.instance.newMaster = sourceIp;
-						}
-					}
-				} catch (SocketTimeoutException ex) {
-					continue;
-				} catch (IOException ex) {
-					this.logger.error("Listener thread stopped due to an error receiving messages", ex);
-				}
-			}
-		}
-	}
+// <editor-fold desc="Instance variables" defaultstate="collapsed">	
 	private final Logger logger = LoggerFactory.getLogger(Main.class);
 	private MulticastSocket ms;
 	private InetAddress group;
@@ -213,6 +54,34 @@ public class Main implements Runnable {
 	private String groupIp = "224.0.0.1";
 	private Thread waitMessagesThread = null;
 	private Thread masterTask = null;
+// </editor-fold>
+	
+
+// <editor-fold desc="Setters and getters" defaultstate="collapsed">
+	public String getNewMaster() {
+		return newMaster;
+	}
+
+	public void setNewMaster(String newMaster) {
+		this.newMaster = newMaster;
+	}
+	
+	public Boolean getElectionCasted() {
+		return electionCasted;
+	}
+
+	public InetAddress getGroup() {
+		return group;
+	}
+
+	public MulticastSocket getMs() {
+		return ms;
+	}
+
+	public int getPort() {
+		return port;
+	}
+// </editor-fold>
 
 	public Main(Runnable masterTask) {
 		try {
@@ -250,7 +119,7 @@ public class Main implements Runnable {
 		this.election();
 	}
 
-	private void election() {
+	public void election() {
 		if (electionCasted) {
 			return;
 		}
