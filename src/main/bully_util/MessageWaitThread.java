@@ -82,12 +82,12 @@ public class MessageWaitThread implements Runnable {
 				} else if (bullyMsg == Main.BullyMessages.ElectionRequest && this.ip.compareTo(sourceIp) < 0) {
 					this.logger.info("Received election message from a following ip ({}), not answering", sourceIp);
 				} else if (bullyMsg == Main.BullyMessages.Master) {
-					this.instance.setMaster(sourceIp);
+					this.instance.setNewMaster(sourceIp);
 					this.logger.info("Master message received from {}", sourceIp);
 
-					//if (!this.instance.getElectionCasted()) {
+					if (!this.instance.getElectionCasted()) {
 						this.instance.masterReceived();
-					//}
+					}
 				} else if (bullyMsg == Main.BullyMessages.MasterAlive) {
 					this.countMaster = MAX_MASTER;
 				}

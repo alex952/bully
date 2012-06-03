@@ -177,22 +177,23 @@ public class Main implements Runnable {
 		try {
 			this.logger.info("Waiting for master messages");
 
-			String oldMaster = this.master;
+			//String oldMaster = this.master;
 			
 			Thread.sleep(15000L);
 
-			if (oldMaster.equals(this.master)) {
+			/*if (oldMaster.equals(this.master)) {
 				this.logger.info("No master message received. Re-casting election");
 				this.election();
 			} else {
 				this.electionCasted = false;
-			}
-			/*if (!this.newMaster.equals(this.master)) {
+			}*/
+			if (!this.newMaster.equals(this.master)) {
+				this.electionCasted = false;
 				this.masterReceived();
 			} else {
 				this.logger.info("No master message received. Re-casting election");
 				this.election();
-			}*/
+			}
 		} catch (InterruptedException e) {
 			this.logger.error("Couldn't wait for answers due to an error", e);
 		}
