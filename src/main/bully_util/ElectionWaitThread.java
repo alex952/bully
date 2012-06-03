@@ -72,7 +72,7 @@ public class ElectionWaitThread implements Runnable {
 		try {	
 			ss = new ServerSocket();
 			ss.setReuseAddress(true);
-			portServer = Integer.parseInt((ip.split("\\."))[3]);
+			portServer = Integer.parseInt((ip.split("\\."))[3])+100;
 			
 			ss.bind(new InetSocketAddress(InetAddress.getLocalHost(), portServer));
 			ss.setSoTimeout(5000);
