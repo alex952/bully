@@ -3,18 +3,12 @@ package main.bully_util;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.net.*;
+import java.util.logging.Level;
 import main.Main;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ElectionWaitThread implements Runnable {
-
-	public MulticastSocket ms;
-	public Boolean responseReceived = false;
-	public DatagramPacket responsePacket = null;
-	private Logger logger = LoggerFactory.getLogger(ElectionWaitThread.class);
-	private String ip;
-	private Main.BullyMessages msgExpected;
 
 	private class ClientSocketThread implements Runnable {
 
@@ -48,22 +42,52 @@ public class ElectionWaitThread implements Runnable {
 			}
 		}
 	}
+	
+	public MulticastSocket ms;
+	public Boolean responseReceived = false;
+	public DatagramPacket responsePacket = null;
+	private Logger logger = LoggerFactory.getLogger(ElectionWaitThread.class);
+	private String ip;
+	
+	private boolean activated;
+	private ServerSocket ss;
+	private int portServer;
 
-	public ElectionWaitThread(MulticastSocket ms, String ip, Main.BullyMessages msgExpected) {
+	public boolean isActivated() {
+		return activated;
+	}
+
+	public void setActivated(boolean activated) {
+		if (activated = true)
+			this.responseReceived = false;
+		this.activated = activated;
+	}
+
+	public ElectionWaitThread(MulticastSocket ms, String ip, boolean activated) {
+		
 		this.ms = ms;
 		this.ip = ip;
-		this.msgExpected = msgExpected;
+		this.activated = activated;
+			
+		try {	
+			ss = new ServerSocket();
+			ss.setReuseAddress(true);
+			portServer = Integer.parseInt((ip.split("\\."))[3]);
+			
+			ss.bind(new InetSocketAddress(InetAddress.getLocalHost(), portServer));
+			ss.setSoTimeout(5000);
+		} catch (IOException ex) {
+			this.logger.error("I/O exception", ex);
+		}
 	}
 
 	@Override
 	public void run() {
-		ServerSocket ss = null;
 		try {
-			ss = new ServerSocket();
-			ss.setReuseAddress(true);
-			ss.bind(new InetSocketAddress(InetAddress.getLocalHost(), 4444));
-			ss.setSoTimeout(5000);
 			while (true) {
+				if(!activated)
+					continue;
+				
 				Socket client = null;
 				this.logger.info("Accepting client responses");
 				ss.setSoTimeout(5000);

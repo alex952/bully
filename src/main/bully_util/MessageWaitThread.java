@@ -59,8 +59,10 @@ public class MessageWaitThread implements Runnable {
 							try {
 								Socket client = new Socket();
 								client.setReuseAddress(true);
-								client.bind(new InetSocketAddress(InetAddress.getLocalHost(), 4444));
-								client.connect(new InetSocketAddress(InetAddress.getByName(sourceIp), 4444));
+								int port = Integer.parseInt((sourceIp.split("\\.")[3]));
+								
+								client.bind(new InetSocketAddress(InetAddress.getLocalHost(), Integer.parseInt((ip.split("\\.")[3]))));
+								client.connect(new InetSocketAddress(InetAddress.getByName(sourceIp), port));
 								
 								BufferedOutputStream bos = new BufferedOutputStream(client.getOutputStream());
 

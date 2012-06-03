@@ -63,6 +63,9 @@ public class Main implements Runnable {
 	
 	private Runnable masterTaskRunnable;
 	private Thread masterTask = null;
+	
+	private ElectionWaitThread electionRunnableThread;
+	private Thread electionThread;
 // </editor-fold>
 
 
@@ -110,8 +113,12 @@ public class Main implements Runnable {
 			group = InetAddress.getByName(this.groupIp);
 			ms.joinGroup(group);
 
-			//Create thread of master task
 			this.masterTaskRunnable = masterTask;
+			
+			//Create election thread
+			this.electionRunnableThread = new ElectionWaitThread(ms, ip, false);
+			this.electionThread = new Thread(this.electionRunnableThread);
+			this.electionThread.start();
 
 			Thread.sleep(2000L);
 		} catch (UnknownHostException e) {
@@ -143,9 +150,7 @@ public class Main implements Runnable {
 
 		DatagramPacket dp = new DatagramPacket(buf, buf.length, this.group, this.port);
 		try {
-			ElectionWaitThread electionThread = new ElectionWaitThread(ms, ip, BullyMessages.ElectionAnswer);
-			Thread th = new Thread(electionThread);
-			th.start();
+			this.electionRunnableThread.setActivated(true);
 
 			this.logger.info("Sending election request message");
 			this.ms.send(dp);
@@ -153,10 +158,9 @@ public class Main implements Runnable {
 
 			this.logger.info("Waiting for answers ({} seconds, more or less)", 5);
 
-			while (th.isAlive()) {
-			}
+			this.electionRunnableThread.setActivated(false);
 
-			if (!electionThread.responseReceived) {
+			if (!electionRunnableThread.responseReceived) {
 				this.logger.info("No answers received. Sending master message");
 				this.masterMessage();
 			} else {
