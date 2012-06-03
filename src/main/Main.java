@@ -71,6 +71,10 @@ public class Main implements Runnable {
 	public String getMaster() {
 		return master;
 	}
+
+	public void setMaster(String master) {
+		this.master = master;
+	}
 	
 	public String getNewMaster() {
 		return newMaster;
@@ -173,21 +177,29 @@ public class Main implements Runnable {
 		try {
 			this.logger.info("Waiting for master messages");
 
+			String oldMaster = this.master;
+			
 			Thread.sleep(15000L);
 
-			if (!this.newMaster.equals(this.master)) {
+			if (oldMaster.equals(this.master)) {
+				this.logger.info("No master message received. Re-casting election");
+				this.election();
+			} else {
+				this.electionCasted = false;
+			}
+			/*if (!this.newMaster.equals(this.master)) {
 				this.masterReceived();
 			} else {
 				this.logger.info("No master message received. Re-casting election");
 				this.election();
-			}
+			}*/
 		} catch (InterruptedException e) {
 			this.logger.error("Couldn't wait for answers due to an error", e);
 		}
 	}
 	
 	public void masterReceived() {
-		this.electionCasted = false;
+		//this.electionCasted = false;
 		this.master = this.newMaster;
 		if (this.masterTask != null) {
 			this.masterTask.interrupt();
