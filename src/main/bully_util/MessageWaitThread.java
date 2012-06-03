@@ -84,6 +84,7 @@ public class MessageWaitThread implements Runnable {
 				} else if (bullyMsg == Main.BullyMessages.Master) {
 					this.instance.setMaster(sourceIp);
 					this.logger.info("Master message received from {}", sourceIp);
+
 					//if (!this.instance.getElectionCasted()) {
 						this.instance.masterReceived();
 					//}
