@@ -1,14 +1,16 @@
 package main;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
+import daemon.Daemon;
 import java.io.IOException;
-import java.net.*;
-import java.util.logging.Level;
+import java.net.DatagramPacket;
+import java.net.InetAddress;
+import java.net.MulticastSocket;
+import java.net.UnknownHostException;
+import main.bully_util.ElectionWaitThread;
+import main.bully_util.MasterAliveThread;
+import main.bully_util.MessageWaitThread;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import main.bully_util.*;
-import main.delete.MasterTaskThread;
 
 /**
  * Main class for the Bully algorithm
@@ -61,8 +63,7 @@ public class Main implements Runnable {
 	private Thread waitMessagesThread = null;
     private Thread masterAlive = null;
 	
-	private Runnable masterTaskRunnable;
-	private Thread masterTask = null;
+	private daemon.Daemon masterTaskRunnable;
 // </editor-fold>
 
 
@@ -101,7 +102,7 @@ public class Main implements Runnable {
 	}
 // </editor-fold>
 
-	public Main(Runnable masterTask) {
+	public Main(daemon.Daemon masterTask) {
 		try {
 			//Find out own ip
 			InetAddress ownAddress = InetAddress.getLocalHost();
@@ -202,9 +203,8 @@ public class Main implements Runnable {
 	public void masterReceived() {
 		//this.electionCasted = false;
 		this.master = this.newMaster;
-		if (this.masterTask != null) {
-			this.masterTask.interrupt();
-			this.masterTask = null;
+		if (this.masterTaskRunnable != null) {
+			this.masterTaskRunnable.setActivated(false);
 		}
 		
 		if (this.masterAlive != null) {
@@ -225,10 +225,7 @@ public class Main implements Runnable {
 
 			this.logger.info("Starting task of master");
 			//Start task of master	
-			if (this.masterTask == null || !this.masterTask.isAlive()) {
-				this.masterTask = new Thread(this.masterTaskRunnable);
-				this.masterTask.start();
-			}
+			this.masterTaskRunnable.setActivated(true);
 
             if (this.masterAlive == null || !this.masterAlive.isAlive()) {
                 this.masterAlive = new Thread(new MasterAliveThread(ms, group, port));
@@ -244,9 +241,10 @@ public class Main implements Runnable {
 	}
 
 	public static void main(String[] args) {
-		MasterTaskThread mtt = new MasterTaskThread();
+		daemon.Daemon daemon = new Daemon("", "");
+		daemon.procesar();
 		
-		Main m = new Main(mtt);
+		Main m = new Main(daemon);
 		m.run();
 	}
 }
