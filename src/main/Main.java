@@ -224,6 +224,7 @@ public class Main implements Runnable {
 		DatagramPacket dp = new DatagramPacket(buf, buf.length, this.group, this.port);
 
 		try {
+			Thread.sleep(500L);
 			this.logger.info("Sending master message to multicast group");
 			this.ms.send(dp);
 
@@ -241,6 +242,8 @@ public class Main implements Runnable {
 			this.newMaster = "";
 		} catch (IOException e) {
 			this.logger.error("Couldn't send master message due to an error", e);
+		} catch (InterruptedException e) {
+			this.logger.error("Couln't sleep the thread before sending master message", e);
 		}
 	}
 
