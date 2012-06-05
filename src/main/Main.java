@@ -184,7 +184,7 @@ public class Main implements Runnable {
 
 			//String oldMaster = this.master;
 			
-			Thread.sleep(15000L);
+			Thread.sleep(20000L);
 
 			/*if (oldMaster.equals(this.master)) {
 				this.logger.info("No master message received. Re-casting election");
@@ -192,8 +192,8 @@ public class Main implements Runnable {
 			} else {
 				this.electionCasted = false;
 			}*/
+			this.electionCasted = false;
 			if (!this.newMaster.equals(this.master)) {
-				this.electionCasted = false;
 				this.masterReceived();
 			} else {
 				this.logger.info("No master message received. Re-casting election");
