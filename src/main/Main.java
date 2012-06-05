@@ -64,6 +64,7 @@ public class Main implements Runnable {
     private Thread masterAlive = null;
 	
 	private daemon.Daemon masterTaskRunnable;
+	private Thread masterTask;
 // </editor-fold>
 
 
@@ -117,6 +118,7 @@ public class Main implements Runnable {
 
 			//Create thread of master task
 			this.masterTaskRunnable = masterTask;
+			this.masterTask = new Thread(this.masterTaskRunnable);
 
 			Thread.sleep(2000L);
 		} catch (UnknownHostException e) {
@@ -132,7 +134,9 @@ public class Main implements Runnable {
 	public void run() {
 		this.logger.info("Listening now on {}:{} for election messages from the multicast group", this.groupIp, this.port);
 		this.waitMessagesThread = new Thread(new MessageWaitThread(this.ms, this.ip, this, this.group, this.port));
-		this.waitMessagesThread.start();	
+		this.waitMessagesThread.start();
+		
+		this.masterTask.start();
 		
 		this.logger.info("Casting raise election");
 		this.election();
@@ -242,7 +246,7 @@ public class Main implements Runnable {
 
 	public static void main(String[] args) {
 		daemon.Daemon daemon = new Daemon("", "");
-		daemon.procesar();
+		//daemon.procesar();
 		
 		Main m = new Main(daemon);
 		m.run();
